@@ -2,14 +2,26 @@
 
 // This file contains the controller functions that handle the HTTP requests.
 
+// call the users db functions to handle the data actions
+const db = require("../db/api/users");
+
 async function createUser(req, res) {
-  // test response
-  res.json({"message": "In createUser"})
+  try {
+    const userData = req.body;
+    const newUser = await db.createUser(userData);
+    res.status(201).json(newUser);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create user" });
+  }
 }
 
 async function getAllUsers(req, res) {
-  // test response
-  res.json({"message": "In getAllUsers"})
+  try {
+    const users = await db.getAllUsers();
+    res.status(200).json({ users });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to retrieve users" });
+  }
 }
 
 async function updateUser(req, res) {
