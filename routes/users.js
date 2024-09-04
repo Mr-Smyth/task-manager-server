@@ -12,6 +12,9 @@ router.post('/',  usersController.createUser);
 // Route for getting all users
 router.get('/', usersController.getAllUsers);
 
+// Route for updating a user with PATCH (partial update)
+router.patch('/:id', usersController.updateUser);
+
 // Route for updating a user with PUT (full update)
 router.put('/:id',  usersController.updateUser);
 
