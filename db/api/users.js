@@ -114,8 +114,41 @@ async function updateUser(id, userUpdates) {
   });
 }
 
+// Function to delete a user by their ID
+async function deleteUser(id) {
+  return new Promise((resolve, reject) => {
+    const query = `DELETE FROM users WHERE id = ?`;
+    const params = [id];
+
+    // First, check if the user exists by calling getUserById
+    getUserById(id)
+      .then((user) => {
+        if (!user) {
+          // If the user does not exist, resolve the Promise with null
+          resolve(null);
+        } else {
+          // If the user exists, proceed with the deletion
+          // The run() method executes the DELETE statement and calls the callback function
+          db.run(query, params, function (err) {
+            if (err) {
+              // If an error occurs during deletion, reject the Promise with an error message
+              reject(new Error(`Failed to delete user with id ${id}: ${err.message}`));
+            } else {
+              // On success, resolve the Promise with the deleted user object
+              resolve(user);
+            }
+          });
+        }
+      })
+      // On success, resolution will only happen if the user exists - which depends on getUserById
+      // if it doesnt - it will fail. Also if any part of the delete query fails the promise will also fail
+      .catch(reject);
+  });
+}
+
 module.exports = {
   createUser,
   getAllUsers,
-  updateUser
+  updateUser,
+  deleteUser
 };
