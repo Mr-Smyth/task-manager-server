@@ -27,16 +27,35 @@ async function createUser(user) {
 // Function to retrieve all users from the database
 async function getAllUsers() {
   return new Promise((resolve, reject) => {
-    const query = `SELECT * FROM users`;
+    // query retrieves user data from the users table and associated task IDs from the user_tasks table
+    // using Group Concat as there could be multiple tasks associated with a user
+    // Using Left join as a user may have no tasks, but need to be included
+    // finally grouping them so no duplication in users due to join
+    const query = `
+      SELECT users.*, GROUP_CONCAT(user_tasks.task_id) AS taskIds
+      FROM users
+      LEFT JOIN user_tasks ON users.id = user_tasks.user_id
+      GROUP BY users.id
+    `;
 
-    // The all() method retrieves all rows from the result set and calls the callback function
+    // Execute Query - The all() method retrieves all rows from the result set and calls the callback function
     db.all(query, [], (err, rows) => {
       if (err) {
         // If an error occurs, reject the Promise with an error message
         reject(new Error(`Failed to retrieve users: ${err.message}`));
       } else {
+        // rows is an array of retrieved user objects - Each user object includes a taskIds field, which is a comma-separated string of task IDs
+        // Add the user name and description by spreading row of rows
+        // taskIds are then (if exists) - mapped into an array of the split string of task IDs converted to integers which i get from the group concat
+        // or it will be an empty array
+        const users = rows.map((row) => ({
+          ...row,
+          taskIds: row.taskIds ?
+          row.taskIds.split(",").map((id) => parseInt(id))
+            : [],
+        }));
         // On success, resolve the Promise with the array of user rows
-        resolve(rows);
+        resolve(users);
       }
     });
   });
@@ -44,7 +63,7 @@ async function getAllUsers() {
 
 // Function to retrieve a user by their ID
 // May use this as a seperate api action
-// but initially need it to check if a user exists to allow 
+// but initially need it to check if a user exists to allow
 // updating of a user in updateUser
 async function getUserById(id) {
   return new Promise((resolve, reject) => {
@@ -55,7 +74,9 @@ async function getUserById(id) {
     db.get(query, params, (err, row) => {
       if (err) {
         // If an error occurs, reject the Promise with an error message
-        reject(new Error(`Failed to retrieve user with id ${id}: ${err.message}`));
+        reject(
+          new Error(`Failed to retrieve user with id ${id}: ${err.message}`)
+        );
       } else {
         // On success, resolve the Promise with the user row
         resolve(row);
@@ -75,15 +96,15 @@ async function updateUser(id, userUpdates) {
     // by default the fields and params will be blank and only
     // populated if the data is passed in the body of the request
     if (userUpdates.first_name) {
-      fields.push('first_name = ?');
+      fields.push("first_name = ?");
       params.push(userUpdates.first_name);
     }
     if (userUpdates.last_name) {
-      fields.push('last_name = ?');
+      fields.push("last_name = ?");
       params.push(userUpdates.last_name);
     }
     if (userUpdates.description) {
-      fields.push('description = ?');
+      fields.push("description = ?");
       params.push(userUpdates.description);
     }
 
@@ -95,7 +116,7 @@ async function updateUser(id, userUpdates) {
 
     // Append the WHERE clause with the ID
     // set the fields on the query
-    const query = `UPDATE users SET ${fields.join(', ')} WHERE id = ?`;
+    const query = `UPDATE users SET ${fields.join(", ")} WHERE id = ?`;
     // add the params containing the id of the user
     params.push(id);
 
@@ -103,7 +124,9 @@ async function updateUser(id, userUpdates) {
     db.run(query, params, function (err) {
       if (err) {
         // If an error occurs during the update, reject the Promise with an error message
-        reject(new Error(`Failed to update user with id ${id}: ${err.message}`));
+        reject(
+          new Error(`Failed to update user with id ${id}: ${err.message}`)
+        );
       } else {
         // On success, retrieve the updated user and resolve the Promise with the updated user object
         // this will indicate the user exists as it could be found in getUserById
@@ -132,7 +155,9 @@ async function deleteUser(id) {
           db.run(query, params, function (err) {
             if (err) {
               // If an error occurs during deletion, reject the Promise with an error message
-              reject(new Error(`Failed to delete user with id ${id}: ${err.message}`));
+              reject(
+                new Error(`Failed to delete user with id ${id}: ${err.message}`)
+              );
             } else {
               // On success, resolve the Promise with the deleted user object
               resolve(user);
@@ -150,5 +175,5 @@ module.exports = {
   createUser,
   getAllUsers,
   updateUser,
-  deleteUser
+  deleteUser,
 };

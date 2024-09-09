@@ -39,4 +39,23 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
+// setup the user / task table
+// needs a table with a many to many relationship as users can be linked to multiple tasks
+db.run(
+  `CREATE TABLE IF NOT EXISTS user_tasks (
+      user_id INTEGER,
+      task_id INTEGER,
+      FOREIGN KEY(user_id) REFERENCES users(id),
+      FOREIGN KEY(task_id) REFERENCES tasks(id)
+   )`,
+  (err) => {
+    if (err) {
+      console.error("Error creating user_tasks table:", err.message);
+    } else {
+      console.log("user_tasks table ready (created if it did not exist).");
+    }
+  }
+);
+
+
 module.exports = db;
