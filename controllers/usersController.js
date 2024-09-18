@@ -61,7 +61,7 @@ async function deleteUser(req, res) {
   try {
     const deletedUser = await db.deleteUser(req.params.id);
     if (deletedUser) {
-      res.status(200).json(deletedUser);
+      res.status(204).json(deletedUser);
     } else {
       res.status(404).json({ error: "User not found" });
     }

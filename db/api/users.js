@@ -155,12 +155,10 @@ async function deleteUser(id) {
           db.run(query, params, function (err) {
             if (err) {
               // If an error occurs during deletion, reject the Promise with an error message
-              reject(
-                new Error(`Failed to delete user with id ${id}: ${err.message}`)
-              );
+              reject(new Error(`Failed to delete user with id ${id}: ${err.message}`));
             } else {
-              // On success, resolve the Promise with the deleted user object
-              resolve(user);
+              // On success, resolve with a success message to the controller 
+              resolve({ message: 'User deleted successfully' });
             }
           });
         }
