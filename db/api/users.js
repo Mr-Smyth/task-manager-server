@@ -17,8 +17,13 @@ async function createUser(user) {
       } else {
         // On success, resolve the Promise with the newly created user object
         // (this.lastID) contains the ID of the newly inserted row returned by run()
-        // then we add it to the user object passed in
-        resolve({ id: this.lastID, ...user });
+        const newUser = {
+          id: this.lastID,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          description: user.description,
+        };
+        resolve({ users: newUser }); // Wrap the user in an object as expected
       }
     });
   });
@@ -49,10 +54,11 @@ async function getAllUsers() {
         // taskIds are then (if exists) - mapped into an array of the split string of task IDs converted to integers which i get from the group concat
         // or it will be an empty array
         const users = rows.map((row) => ({
-          ...row,
-          taskIds: row.taskIds ?
-          row.taskIds.split(",").map((id) => parseInt(id))
-            : [],
+          id: row.id,
+          first_name: row.first_name,
+          last_name: row.last_name,
+          description: row.description,
+          taskIds: row.taskIds ? row.taskIds.split(",").map((id) => parseInt(id)) : [],
         }));
         // On success, resolve the Promise with the array of user rows
         resolve(users);
@@ -74,9 +80,7 @@ async function getUserById(id) {
     db.get(query, params, (err, row) => {
       if (err) {
         // If an error occurs, reject the Promise with an error message
-        reject(
-          new Error(`Failed to retrieve user with id ${id}: ${err.message}`)
-        );
+        reject(new Error(`Failed to retrieve user with id ${id}: ${err.message}`));
       } else {
         // On success, resolve the Promise with the user row
         resolve(row);
@@ -124,9 +128,7 @@ async function updateUser(id, userUpdates) {
     db.run(query, params, function (err) {
       if (err) {
         // If an error occurs during the update, reject the Promise with an error message
-        reject(
-          new Error(`Failed to update user with id ${id}: ${err.message}`)
-        );
+        reject(new Error(`Failed to update user with id ${id}: ${err.message}`));
       } else {
         // On success, retrieve the updated user and resolve the Promise with the updated user object
         // this will indicate the user exists as it could be found in getUserById
