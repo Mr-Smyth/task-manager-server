@@ -43,6 +43,7 @@ async function getAllUsers(req, res) {
 // Handle updating a user
 async function updateUser(req, res) {
   try {
+    console.log("req.body: ", req.body)
     const userData = trimUserData(req.body);
     const updatedUser = await db.updateUser(req.params.id, userData);
     // use the response of the updateUser call to determine if the user exists

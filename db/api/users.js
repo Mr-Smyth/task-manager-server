@@ -95,6 +95,7 @@ async function updateUser(id, userUpdates) {
     //  Build the SQL query based on provided fields
     const fields = [];
     const params = [];
+    console.log("userUpdate: ", userUpdates)
 
     // Here we make it possible to either PUT or PATCH
     // by default the fields and params will be blank and only
@@ -104,10 +105,13 @@ async function updateUser(id, userUpdates) {
       params.push(userUpdates.first_name);
     }
     if (userUpdates.last_name) {
+      console.log("Last Name: ", userUpdates.last_name)
+
       fields.push("last_name = ?");
       params.push(userUpdates.last_name);
     }
     if (userUpdates.description) {
+      console.log("description: ", userUpdates.description)
       fields.push("description = ?");
       params.push(userUpdates.description);
     }
@@ -118,9 +122,13 @@ async function updateUser(id, userUpdates) {
       return;
     }
 
+    console.log("Fields: ", fields)
+
     // Append the WHERE clause with the ID
     // set the fields on the query
     const query = `UPDATE users SET ${fields.join(", ")} WHERE id = ?`;
+    console.log("Query: ", query)
+    console.log("params: ", params)
     // add the params containing the id of the user
     params.push(id);
 
@@ -133,7 +141,10 @@ async function updateUser(id, userUpdates) {
         // On success, retrieve the updated user and resolve the Promise with the updated user object
         // this will indicate the user exists as it could be found in getUserById
         // and allow the update to succeed
-        getUserById(id).then(resolve).catch(reject);
+        getUserById(id).then((updatedUser) => {
+          // wrap the updated user in 'users'
+          resolve({ users: updatedUser });
+        }).catch(reject);
       }
     });
   });
