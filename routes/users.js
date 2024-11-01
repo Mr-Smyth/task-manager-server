@@ -5,7 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const usersController = require('../controllers/usersController');
-const {validateUser, validateUpdateUser} = require('../middleware/validators');
+const {validateUser, validateUpdateUser} = require('../middleware/userValidators');
 
 
 // Route for creating a user

@@ -2,6 +2,7 @@
 const express = require("express");
 const server = express();
 const userRoutes = require("./routes/users");
+const taskRoutes = require("./routes/tasks");
 const errorHandler = require("./middleware/errorHandler");
 const cors = require('cors');
 
@@ -19,6 +20,9 @@ server.use(express.urlencoded({ extended: false }));
 
 // Add the userRoutes module on the /task-manager-data/api/users path.
 server.use("/task-manager-data/api/users", userRoutes);
+
+// Add the taskRoutes module on the /task-manager-data/api/tasks path
+server.use("/task-manager-data/api/tasks", taskRoutes);
 
 // Use the errorHandling middleware to handle issues
 server.use(errorHandler);

@@ -11,7 +11,10 @@ const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 
 // Define the path to the database file
-const dbPath = path.resolve(__dirname, "../public/api/task-manager-data.sqlite3");
+const dbPath = path.resolve(
+  __dirname,
+  "../public/api/task-manager-data.sqlite3"
+);
 
 // Create and export the database connection
 const db = new sqlite3.Database(dbPath, (err) => {
@@ -39,6 +42,22 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
+// Create the 'tasks' table if it doesn't exist
+db.run(
+  ` CREATE TABLE IF NOT EXISTS tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT
+    )`,
+  (err) => {
+    if (err) {
+      console.error("Error creating tasks table:", err.message);
+    } else {
+      console.log("Tasks table ready (created if it did not exist).");
+    }
+  }
+);
+
 // setup the user / task table
 // needs a table with a many to many relationship as users can be linked to multiple tasks
 db.run(
@@ -56,6 +75,5 @@ db.run(
     }
   }
 );
-
 
 module.exports = db;
