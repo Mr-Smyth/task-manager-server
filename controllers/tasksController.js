@@ -1,57 +1,112 @@
-// controllers/tasksController.js
+const dbCreateTask = require("../db/api/tasks/createTask");
+const dbGetAllTasks = require("../db/api/tasks/getAllTasks");
+const dbUpdateTask = require("../db/api/tasks/updateTask");
+const dbDeleteTask = require("../db/api/tasks/deleteTask");
 
-// This file contains the controller functions that handle the HTTP requests for tasks
-
-// call the users db functions to handle the data actions
-const db = require("../db/api/tasks");
-
-// Handle creating a task
+/**
+ * Handles the creation of a new task.
+ *
+ * Expects the request body to contain task data, including the userId of the task creator.
+ * Creates a task using the provided data and returns the newly created task.
+ *
+ * @param {Object} req - The request object, containing the task data in req.body.
+ * @param {Object} res - The response object, used to send the HTTP response.
+ * @returns {Object} A JSON response containing the created task or an error message.
+ */
 async function createTask(req, res) {
   try {
     const taskData = req.body;
-    const newTask = await db.createTask(taskData);
+    // Pass the task data and userId to the database handler
+    const newTask = await dbCreateTask(taskData, taskData.userId);
+    // Return the created task with status 201 (Created)
     res.status(201).json(newTask);
   } catch (error) {
-    res.status(500).json({ error: "Failed to create task" });
+    // Handle any errors
+    res.status(500).json({ error: error.message || "Failed to create task" });
   }
 }
 
-// Handle Getting all tasks
+/**
+ * Retrieves all tasks from the database.
+ *
+ * This function fetches the list of all tasks and returns them in the response.
+ *
+ * @param {Object} req - The request object (not used here, but part of the signature).
+ * @param {Object} res - The response object, used to send the list of tasks or an error message.
+ * @returns {Object} A JSON response containing a list of tasks or an error message.
+ */
 async function getAllTasks(req, res) {
   try {
-    const tasks = await db.getAllTasks();
+    // Fetch all tasks from the database
+    const tasks = await dbGetAllTasks();
+    // Return the tasks with status 200 (OK)
     res.status(200).json({ tasks });
   } catch (error) {
+    // Handle any errors
     res.status(500).json({ error: "Failed to retrieve tasks" });
   }
 }
 
-// Handle updating a task
+/**
+ * Handles the update of an existing task.
+ *
+ * Expects the task ID as a parameter in the URL and the task data (title, description, userId) in the request body.
+ * Attempts to update the task with the provided ID and data.
+ *
+ * @param {Object} req - The request object, containing the task ID in req.params.id and the task data in req.body.
+ * @param {Object} res - The response object, used to send the updated task or an error message.
+ * @returns {Object} A JSON response containing the updated task or an error message.
+ */
 async function updateTask(req, res) {
   try {
-    const taskData = req.body;
-    const updatedTask = await db.updateTask(req.params.id, taskData);
+    // Extract task ID from URL parameters
+    const taskId = req.params.id;
+    // Destructure the task data from the request body
+    const { title, description, userId } = req.body;
+    // Create a task data object
+    const taskData = { title, description, userId };
+    // Pass task ID and data to the database handler
+    const updatedTask = await dbUpdateTask(taskId, taskData);
+
     if (updatedTask) {
+      // Return the updated task with status 200 (OK)
       res.status(200).json(updatedTask);
     } else {
+      // Task not found, return 404 error
       res.status(404).json({ error: "Task not found" });
     }
   } catch (error) {
+    // Log the error for debugging purposes
+    console.error("Error updating task:", error.message);
+    // Handle any errors
     res.status(500).json({ error: "Failed to update task" });
   }
 }
 
-// Handle deleting a task
+/**
+ * Handles the deletion of a task.
+ *
+ * Expects the task ID as a parameter in the URL.
+ * Attempts to delete the task with the provided ID and returns a success response or an error message.
+ *
+ * @param {Object} req - The request object, containing the task ID in req.params.id.
+ * @param {Object} res - The response object, used to send a success response or an error message.
+ * @returns {Object} A JSON response indicating the success or failure of the deletion.
+ */
 async function deleteTask(req, res) {
   try {
-    const deleted = await db.deleteTask(req.params.id);
+    // Pass the task ID to the database handler for deletion
+    const deleted = await dbDeleteTask(req.params.id);
+
     if (deleted) {
-      // No content to send back
+      // Return status 204 (No Content) for successful deletion
       res.status(204).send();
     } else {
+      // Task not found, return 404 error
       res.status(404).json({ error: "Task not found" });
     }
   } catch (error) {
+    // Handle any errors
     res.status(500).json({ error: "Failed to delete task" });
   }
 }
