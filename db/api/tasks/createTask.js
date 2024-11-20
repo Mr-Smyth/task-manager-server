@@ -1,5 +1,5 @@
 const queryRunner = require("../utils/queryRunner");
-const assignUserToTask = require("../utils/assignUserToTask");
+const assignUserToTask = require("./assignUserToTask");
 
 /**
  * Creates a new task in the database and optionally assigns it to a user.
