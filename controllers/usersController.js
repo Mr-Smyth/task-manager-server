@@ -6,7 +6,7 @@ const dbDeleteUser = require("../db/api/users/deleteUser");
 /**
  * Handles the creation of a new user.
  *
- * Expects the request body to contain the user data, such as `name` and `email`.
+ * Expects the request body to contain the user data, such as `first_name`, `last_name`, and `description`.
  * Creates a user using the provided data and returns the newly created user.
  *
  * @param {Object} req - The request object, containing the user data in req.body.
@@ -15,9 +15,19 @@ const dbDeleteUser = require("../db/api/users/deleteUser");
  */
 async function createUser(req, res) {
   try {
-    const { name, email } = req.body;
+    // Destructure the necessary fields from the request body
+    const { first_name, last_name, description } = req.body;
+
+    // Make sure the required fields are provided
+    if (!first_name || !last_name || !description) {
+      return res
+        .status(400)
+        .json({ error: "First name, last name, and description are required" });
+    }
+
     // Create a new user with the sanitized and validated data from the request body
-    const newUser = await dbCreateUser({ name, email });
+    const newUser = await dbCreateUser({ first_name, last_name, description });
+
     // Return the created user with status 201 (Created)
     res.status(201).json(newUser);
   } catch (error) {
@@ -52,7 +62,7 @@ async function getAllUsers(req, res) {
 /**
  * Handles the update of an existing user.
  *
- * Expects the user ID as a parameter in the URL and the user data (name, email) in the request body.
+ * Expects the user ID as a parameter in the URL and the user data (first_name, last_name, description) in the request body.
  * Attempts to update the user with the provided ID and data.
  *
  * @param {Object} req - The request object, containing the user ID in req.params.id and the user data in req.body.
@@ -61,9 +71,28 @@ async function getAllUsers(req, res) {
  */
 async function updateUser(req, res) {
   try {
-    const { name, email } = req.body;
-    // Pass the user ID and updated data to the database handler for updating
-    const updatedUser = await dbUpdateUser(req.params.id, { name, email });
+    // Destructure the necessary fields from the request body
+    const { first_name, last_name, description } = req.body;
+
+    // Prepare the updates object with the available fields
+    const userUpdates = {};
+
+    if (first_name) userUpdates.first_name = first_name;
+    if (last_name) userUpdates.last_name = last_name;
+    if (description) userUpdates.description = description;
+
+    // If no valid fields are provided, return a 400 error
+    if (Object.keys(userUpdates).length === 0) {
+      return res
+        .status(400)
+        .json({
+          error:
+            "At least one field (first_name, last_name, description) must be provided",
+        });
+    }
+
+    // Call the database function to update the user
+    const updatedUser = await dbUpdateUser(req.params.id, userUpdates);
 
     if (updatedUser) {
       // Return the updated user with status 200 (OK)
