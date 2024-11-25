@@ -18,13 +18,6 @@ async function createTask(task, userId) {
     // Execute the query to insert a new task and get the generated task ID
     const taskId = await queryRunner(query, params);
 
-    // Create a task object with the returned task ID
-    const newTask = {
-      id: taskId,
-      title: task.title,
-      description: task.description,
-    };
-
     // Assign the task to a user if a userId is provided
     if (userId) {
       await assignUserToTask(userId, taskId);
@@ -32,7 +25,17 @@ async function createTask(task, userId) {
 
     // debugging purposes
     console.log(`Task created successfully with ID: ${taskId}`);
-    return newTask;
+
+    // Return the newly created tasks data inside a "tasks" array
+    return {
+      tasks: [
+        {
+          id: taskId,
+          title: task.title,
+          description: task.description,
+        },
+      ],
+    };
   } catch (err) {
     // handle any errors
     console.error(`Error in createTask: ${err.message}`);

@@ -53,7 +53,19 @@ async function updateUser(id, userUpdates) {
     await queryRunner(query, params);
 
     // After updating, fetch and return the updated user details
-    return await getUserById(id);
+    let updatedUser =  await getUserById(id);
+    // Return the updated user's data inside a "users" array
+    return {
+      users: [
+        {
+          id: updatedUser.id,
+          first_name: updatedUser.first_name,
+          last_name: updatedUser.last_name,
+          description: updatedUser.description,
+          taskIds: [],
+        },
+      ],
+    };
   } catch (err) {
     // Handle any errors
     throw new Error(`Failed to update user with id ${id}: ${err.message}`);

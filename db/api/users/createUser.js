@@ -32,14 +32,17 @@ async function createUser(user) {
     // Run the query using the queryRunner utility and get the last inserted ID
     const lastId = await queryRunner(query, params);
 
-    // Return the newly created user's data, including the auto-generated ID
+    // Return the newly created user's data inside a "users" array
     return {
-      users: {
-        id: lastId, // The ID of the newly created user
-        first_name: user.first_name,
-        last_name: user.last_name,
-        description: user.description,
-      },
+      users: [
+        {
+          id: lastId,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          description: user.description,
+          taskIds: [],
+        },
+      ],
     };
   } catch (err) {
     // Handle any errors
