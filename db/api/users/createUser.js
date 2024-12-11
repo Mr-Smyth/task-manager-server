@@ -1,4 +1,6 @@
 const queryRunner = require("../utils/queryRunner");
+const logEvent = require("../utils/logEvent");
+
 
 /**
  * Creates a new user in the database and returns the newly created user's information.
@@ -31,6 +33,22 @@ async function createUser(user) {
   try {
     // Run the query using the queryRunner utility and get the last inserted ID
     const lastId = await queryRunner(query, params);
+
+    // Construct a more detailed description for the audit log
+    const detailedDescription = `User created - name of user is '${user.first_name} ${user.last_name}' with a description: ${user.description}`;
+
+    console.log(
+      `Logging create event for user ID ${lastId} with name: ${user.first_name} ${user.last_name} and a description: ${user.description}`
+    ); // Add this log
+
+    // Log the event with detailed description
+    try {
+      await logEvent("CREATE", "User", lastId, detailedDescription);
+    } catch (loggingError) {
+      console.error(
+        `Failed to log event for task ID ${lastId}: ${loggingError.message}`
+      );
+    }
 
     // Return the newly created user's data inside a "users" array
     return {

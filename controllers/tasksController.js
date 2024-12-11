@@ -15,13 +15,26 @@ const dbDeleteTask = require("../db/api/tasks/deleteTask");
  */
 async function createTask(req, res) {
   try {
-    const taskData = req.body;
-    // Pass the task data and userId to the database handler
-    const newTask = await dbCreateTask(taskData, taskData.userId);
+    const { title, description, status, priority, dueDate, userId } = req.body;
+
+    // Ensure that the required fields (title, description, etc.) are available
+    if (!title || !description || !status || !priority) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const taskData = {
+      title,
+      description,
+      status,
+      priority,
+      dueDate: dueDate || null, // allow dueDate to be null
+    };
+
+    const newTask = await dbCreateTask(taskData, userId);
+
     // Return the created task with status 201 (Created)
     res.status(201).json(newTask);
   } catch (error) {
-    // Handle any errors
     res.status(500).json({ error: error.message || "Failed to create task" });
   }
 }
@@ -59,26 +72,27 @@ async function getAllTasks(req, res) {
  */
 async function updateTask(req, res) {
   try {
-    // Extract task ID from URL parameters
     const taskId = req.params.id;
-    // Destructure the task data from the request body
-    const { title, description, userId } = req.body;
-    // Create a task data object
-    const taskData = { title, description, userId };
-    // Pass task ID and data to the database handler
+    const { title, description, status, priority, dueDate, userId } = req.body;
+
+    const taskData = {
+      title,
+      description,
+      status,
+      priority,
+      dueDate: dueDate || null,
+      userId,
+    };
+
     const updatedTask = await dbUpdateTask(taskId, taskData);
 
     if (updatedTask) {
-      // Return the updated task with status 200 (OK)
       res.status(200).json(updatedTask);
     } else {
-      // Task not found, return 404 error
       res.status(404).json({ error: "Task not found" });
     }
   } catch (error) {
-    // Log the error for debugging purposes
     console.error("Error updating task:", error.message);
-    // Handle any errors
     res.status(500).json({ error: "Failed to update task" });
   }
 }
