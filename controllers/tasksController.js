@@ -17,11 +17,6 @@ async function createTask(req, res) {
   try {
     const { title, description, status, priority, dueDate, userId } = req.body;
 
-    // Ensure that the required fields (title, description, etc.) are available
-    if (!title || !description || !status || !priority) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
     const taskData = {
       title,
       description,
