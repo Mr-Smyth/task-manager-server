@@ -3,26 +3,11 @@ const getTaskById = require("./getTaskById");
 const assignUserToTask = require("./assignUserToTask");
 const getAssignedUser = require("./getAssignedUser");
 
-/**
- * Updates a task with the specified changes (title, description, userId).
- * If a userId is provided, it will also update the user assignment for the task.
- *
- * @param {number} id - The ID of the task to update.
- * @param {Object} taskUpdates - The updates to apply to the task.
- * @param {string} [taskUpdates.title] - The new title of the task (optional).
- * @param {string} [taskUpdates.description] - The new description of the task (optional).
- * @param {number|null} [taskUpdates.userId] - The ID of the user to assign to the task. If `null`, the user will be unassigned (optional).
- *
- * @returns {Promise<Object>} The updated task object.
- * @throws {Error} If no fields are provided for the update or if the update fails.
- */
 async function updateTask(id, taskUpdates) {
-  // Debugging Purposes
-  console.log(
-    `Updating task ${id} with updates: ${JSON.stringify(taskUpdates)}`
-  );
-
-  const { title, description, userId } = taskUpdates;
+  console.log(`Updating task ${id} with updates: ${JSON.stringify(taskUpdates)}`);
+  
+  const { title, description, status, priority, dueDate, userId } = taskUpdates;
+  
   let query = `UPDATE tasks SET `;
   let params = [];
   const fields = [];
@@ -36,70 +21,77 @@ async function updateTask(id, taskUpdates) {
     fields.push("description = ?");
     params.push(description);
   }
+  if (status) {
+    fields.push("status = ?");
+    params.push(status);
+  }
+  if (priority) {
+    fields.push("priority = ?");
+    params.push(priority);
+  }
+  if (dueDate !== undefined) { // dueDate can be null
+    fields.push("dueDate = ?");
+    params.push(dueDate);
+  }
 
-  // Ensure that at least one field is being updated
   if (fields.length === 0) {
-    console.error("No valid fields provided for update");
     throw new Error("No fields to update");
   }
 
-  // Construct the query and add task ID to the parameters
   query += fields.join(", ") + " WHERE id = ?";
   params.push(id);
 
   try {
     // Execute the update query
     await queryRunner(query, params);
-    // Debugging Purposes
-    console.log(`Task ${id} updated successfully`);
 
     // Handle user assignment if userId is provided
     if (userId !== undefined) {
-      // Fetch the current task data to check the assigned user
-      const currentTask = await getTaskById(id);
-      const linkedUserId = await getAssignedUser(id);
+      // Get current assigned user
+      const currentAssignedUser = await getAssignedUser(id);
 
-      // Debugging Purposes
-      console.log("Current User Id = ", linkedUserId);
-
-      // Query to unassign a user from the task
-      const unassignQuery = `DELETE FROM user_tasks WHERE task_id = ?`;
-
-      // If userId is null, unassign the user
       if (userId === null) {
-        if (linkedUserId !== null) {
-          await queryRunner(unassignQuery, [id]);
-          console.log(`User unassigned from task ${id}`);
+        // Unassign the user if userId is null
+        if (currentAssignedUser !== null) {
+          await queryRunner("DELETE FROM user_tasks WHERE task_id = ?", [id]);
         }
-      }
-      // If userId is different from the currently linked user, reassign the task to the new user
-      else if (userId !== linkedUserId) {
-        // Unassign the current user before reassigning a new user
-        if (linkedUserId !== null) {
-          await queryRunner(unassignQuery, [id]);
+      } else if (userId !== currentAssignedUser) {
+        // If a new user is being assigned, replace the old one
+        if (currentAssignedUser !== null) {
+          await queryRunner("DELETE FROM user_tasks WHERE task_id = ?", [id]);
         }
-        // Assign the new user to the task
-        await assignUserToTask(userId, id);
-        console.log(`Task ${id} reassigned to user ${userId}`);
-      }
-      // If the task is already assigned to the same user, no change is made
-      else {
-        console.log(
-          `Task ${id} already assigned to user ${userId}, no change made`
-        );
+        await queryRunner("INSERT OR REPLACE INTO user_tasks (user_id, task_id) VALUES (?, ?)", [userId, id]);
       }
     }
 
-    // Retrieve and return the updated task object
+    // Retrieve the updated task object
     const updatedTask = await getTaskById(id);
-    // Debugging Purposes
-    console.log(`Retrieved updated task: ${JSON.stringify(updatedTask)}`);
-    return updatedTask;
+
+    // Ensure that the updated task data is returned in the expected format
+    const task = updatedTask[0];
+    const newAssignedUserTask = await getAssignedUser(id)
+    console.log("this Assigned User is: ", newAssignedUserTask)
+
+    return {
+      tasks: [
+        {
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          status: task.status,
+          priority: task.priority,
+          dueDate: task.dueDate,
+          created_at: task.created_at,
+          updated_at: task.updated_at,
+          userId: newAssignedUserTask,
+        },
+      ],
+    };
   } catch (err) {
-    // Handle any errors
     console.error(`Error in updateTask: ${err.message}`);
     throw new Error(`Failed to update task: ${err.message}`);
   }
 }
+
 
 module.exports = updateTask;

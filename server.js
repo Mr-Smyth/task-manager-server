@@ -3,6 +3,7 @@ const express = require("express");
 const server = express();
 const userRoutes = require("./routes/users");
 const taskRoutes = require("./routes/tasks");
+const auditRoutes = require("./routes/auditRoutes");
 const errorHandler = require("./middleware/errorHandler");
 const cors = require('cors');
 
@@ -24,8 +25,13 @@ server.use("/task-manager-data/api/users", userRoutes);
 // Add the taskRoutes module on the /task-manager-data/api/tasks path
 server.use("/task-manager-data/api/tasks", taskRoutes);
 
+// Add the audit logs endpoint
+server.use("/task-manager-data/api/audit", auditRoutes);
+
 // Use the errorHandling middleware to handle issues
 server.use(errorHandler);
 
 // Start the server
 server.listen(3000, () => console.log("Server is running on port 3000"));
+
+
